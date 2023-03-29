@@ -10,7 +10,7 @@ import java.text.ParseException;
 class TCPServer {
     public static void main(String argv[]) throws Exception {
         int socketPort = Integer.parseInt(argv[0]);
-        String addressName = argv[1].substring(2);
+        String addressName = argv[1];
 
         //Open connection to server
         ServerSocket welcomeSocket = new ServerSocket(socketPort);
@@ -42,9 +42,10 @@ class TCPServer {
             if (path.endsWith("/")) {
                 path += "index.html";
             }
-            String homeDirectory = System.getProperty("user.home");
-            String rootDirectory = homeDirectory + File.separator + "src" + File.separator;
-            File file = new File(rootDirectory + path + File.separator);
+
+            String rootDirectory = addressName;
+
+            File file = new File(rootDirectory + path);
 
             //Processes GET request
             if (httpRequest.getMethod().equals("GET")) {
