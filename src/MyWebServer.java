@@ -12,7 +12,9 @@ class TCPServer {
         int socketPort = Integer.parseInt(argv[0]);
         String addressName = argv[1].substring(2);
 
+        //Open connection to server
         ServerSocket welcomeSocket = new ServerSocket(socketPort);
+
         while (true) {
             Socket connectionSocket = welcomeSocket.accept();
             BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
@@ -25,6 +27,7 @@ class TCPServer {
                 requestString += line + "\r\n";
             }
 
+            //Makes HTTPRequest to be parsed
             HTTPRequest httpRequest = new HTTPRequest(requestString, addressName);
 
             //Check for port and address.
@@ -39,11 +42,11 @@ class TCPServer {
             if (path.endsWith("/")) {
                 path += "index.html";
             }
-            String rootDirectory = "C:\\Users\\hunter\\IdeaProjects\\MyWebServer\\src\\";
-            File file = new File(rootDirectory + path);
+            String homeDirectory = System.getProperty("user.home");
+            String rootDirectory = homeDirectory + File.separator + "src" + File.separator;
+            File file = new File(rootDirectory + path + File.separator);
 
-
-            // Handle the request based on its method
+            //Processes GET request
             if (httpRequest.getMethod().equals("GET")) {
                 if (!file.exists()) {
                     // Handle 404 Not Found error
@@ -89,8 +92,7 @@ class TCPServer {
                         outToClient.write(fileContent, 0, fileContent.length);
                     }
                 }
-
-
+                //Processes HEAD request
             } else if (httpRequest.getMethod().equals("HEAD")) {
                 if (!file.exists()) {
                     // Handle 404 Not Found error
@@ -139,7 +141,7 @@ class TCPServer {
                     }
                 }
             }
-
+            //Processes anything other than HEAD and GET requests
             else {
                 // Return a 501 Not Implemented error for unsupported methods
                 String response = "HTTP/1.1 501 Not Implemented\r\n\r\n";
@@ -149,39 +151,23 @@ class TCPServer {
             }
         }
     }
-
+    //Gets and formats last modified date
     private static String getLastModified(File file) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy", Locale.US);
         dateFormat.setTimeZone(TimeZone.getTimeZone("EST"));
         return dateFormat.format(file.lastModified());
     }
-
+    //Gets and formats current date
     private static String getCurrentDate() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy", Locale.US);
         dateFormat.setTimeZone(TimeZone.getTimeZone("EST"));
         return dateFormat.format(new Date());
     }
 
-
-
-
-    private static String getContentType(File file) {
-        String fileName = file.getName();
-        String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
-        switch (extension.toLowerCase()) {
-            case "html":
-                return "text/html";
-            case "gif":
-                return "image/gif";
-            default:
-                return "application/octet-stream";
-        }
-    }
-
+    //HTTPRequest class headers
     public static class HTTPRequest {
         private String method;
         private String path;
-        private String ifModifiedSince;
 
         private String[] lines;
         public HTTPRequest(String request, String rootPath) {
@@ -189,17 +175,8 @@ class TCPServer {
             String[] requestLineTokens = lines[0].split(" ");
             method = requestLineTokens[0];
             path = rootPath + requestLineTokens[1];
-            ifModifiedSince = null;
-            for (int i = 1; i < lines.length; i++) {
-                String[] headerTokens = lines[i].split(": ");
-                if (headerTokens[0].equals("If-Modified-Since")) {
-                    ifModifiedSince = headerTokens[1];
-                    break;
-                }
-            }
-
         }
-
+        //Checks if header is present and parses it properly ("If-Modified-Since")
         public String getHeader(String headerName) {
             String headerValue = null;
             for (int i = 1; i < lines.length; i++) {
@@ -218,10 +195,6 @@ class TCPServer {
 
         public String getPath() {
             return path;
-        }
-
-        public String getIfModifiedSince() {
-            return ifModifiedSince;
         }
     }
 }
